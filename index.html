@@ -44,6 +44,7 @@ th,td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--line)}
 th:first-child,td:first-child{text-align:left}
 th{color:var(--muted);font-weight:500;font-size:.8rem}
 .good{color:var(--good)} .bad{color:var(--bad)} .muted{color:var(--muted)}
+button.danger{color:var(--bad);border-color:var(--bad)}
 .x{padding:2px 8px;border:none;color:var(--muted);font-size:1.1rem}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 svg{width:100%;height:auto;display:block}
@@ -100,6 +101,16 @@ svg{width:100%;height:auto;display:block}
       <button id="importBtn">Import backup</button>
       <input type="file" id="importFile" accept="application/json,.json" hidden>
     </div>
+  </section>
+
+  <section class="card">
+    <h2>Clear data</h2>
+    <p class="sub">This can't be undone. Tip: export a backup first.</p>
+    <div class="row" style="align-items:flex-end;margin-bottom:12px">
+      <label style="flex:1;min-width:150px">Month to clear<input type="month" id="clearMonth"></label>
+      <button id="clearMonthBtn" class="danger">Clear this month</button>
+    </div>
+    <button id="clearAllBtn" class="danger">Clear ALL data</button>
   </section>
 </main>
 
@@ -320,6 +331,30 @@ svg{width:100%;height:auto;display:block}
       $file.value = '';
     };
     rd.readAsText(f);
+  };
+
+  // ---- clear data ----
+  var $cm = document.getElementById('clearMonth');
+  $cm.value = fmt(new Date()).slice(0,7);
+
+  document.getElementById('clearMonthBtn').onclick = function(){
+    var m = $cm.value;
+    if (!m){ alert('Pick a month first.'); return; }
+    var keys = Object.keys(data.entries).filter(function(k){ return k.slice(0,7) === m; });
+    if (!keys.length){ alert('No entries found for '+m+'.'); return; }
+    if (!confirm('Delete '+keys.length+' entries from '+m+'? This cannot be undone.')) return;
+    keys.forEach(function(k){ delete data.entries[k]; });
+    save(); render();
+    alert('Cleared '+keys.length+' entries from '+m+'.');
+  };
+
+  document.getElementById('clearAllBtn').onclick = function(){
+    var n = Object.keys(data.entries).length;
+    if (!n){ alert('There is no data to clear.'); return; }
+    if (!confirm('Delete ALL '+n+' entries? This cannot be undone.')) return;
+    if (!confirm('Are you absolutely sure? Everything will be erased from this device.')) return;
+    data.entries = {};
+    save(); render();
   };
 
   render();
